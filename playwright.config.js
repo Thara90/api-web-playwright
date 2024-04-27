@@ -21,7 +21,13 @@ module.exports = defineConfig({
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: 'html',
+  reporter: [
+    ['monocart-reporter', {
+      name: "UniSport Test Results",
+      outputFile: './test-results/report.html',
+    }],
+    ['html']
+  ],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
@@ -34,37 +40,38 @@ module.exports = defineConfig({
   /* Configure projects for major browsers */
   projects: [
     {
-      name: 'chromium',
+      name: 'Google-Chrome',
       use: {
         ...devices['Desktop Chrome'],
+        channel: 'chrome',
         headless: false,
-        viewport: { width: 1360, height: 900 },
+        viewport: { width: 1920, height: 1049 },
         screenshot : 'on',
         trace : 'retain-on-failure'
       },
     },
 
-    {
-      name: 'firefox',
-      use: {
-        ...devices['Desktop Firefox'],
-        headless: false,
-        viewport: { width: 1360, height: 900 },
-        screenshot : 'on',
-        trace : 'retain-on-failure'
-      },
-    },
+    // {
+    //   name: 'firefox',
+    //   use: {
+    //     ...devices['Desktop Firefox'],
+    //     headless: false,
+    //     viewport: { width: 1360, height: 900 },
+    //     screenshot : 'on',
+    //     trace : 'retain-on-failure'
+    //   },
+    // },
 
-    {
-      name: 'webkit',
-      use: {
-        ...devices['Desktop Safari'],
-        headless: true,
-        viewport: { width: 1360, height: 600 },
-        screenshot : 'on',
-        trace : 'retain-on-failure'
-      },
-    },
+    // {
+    //   name: 'webkit',
+    //   use: {
+    //     ...devices['Desktop Safari'],
+    //     headless: true,
+    //     viewport: { width: 1360, height: 600 },
+    //     screenshot : 'on',
+    //     trace : 'retain-on-failure'
+    //   },
+    // },
 
     /* Test against mobile viewports. */
     // {

@@ -1,7 +1,7 @@
-const { test ,request,expect} = require('@playwright/test');
-const loginPayload = {userEmail:"tpshadinijk@gmail.com",userPassword:"Test@1234"}
-const orderPayload = {orders:[{country:"Cuba",productOrderedId:"6262e95ae26b7e1a10e89bf0"}]}
-let token,orderid;
+const { test, request, expect } = require('@playwright/test');
+const loginPayload = { email: "customer2@practicesoftwaretesting.com", password: "welcome01" }
+const orderPayload = { product_id: "01HW4ZG8550TCQ5D60RE89S7SM", quantity: 1 }
+let token, cartId, orderid;
 
 test.describe('E2E Test Suite', () => {
 
@@ -9,48 +9,68 @@ test.describe('E2E Test Suite', () => {
 
         //Login API
         const apiContext = await request.newContext();
-        const loginResponse = await apiContext.post("https://rahulshettyacademy.com/api/ecom/auth/login",
-        {
-            data:loginPayload
-        }
+        const loginResponse = await apiContext.post("https://api.practicesoftwaretesting.com/users/login",
+            {
+                data: loginPayload
+            }
         )
         expect(loginResponse.ok()).toBeTruthy();
-        const loginResponseJson =  await loginResponse.json();
-        token = loginResponseJson.token;
-        console.log(token);    
+        const loginResponseJson = await loginResponse.json();
+        token = loginResponseJson.access_token;
+        console.log(loginResponseJson);
 
-        //Order API
-        const orderResponse = await apiContext.post("https://rahulshettyacademy.com/api/ecom/order/create-order",
-        {
-            data : orderPayload,
-            headers : {
-                'Authorization' : token,
-                'Content-Type' : 'application/json'
+        //Get user's details
+        const response = await apiContext.get("https://api.practicesoftwaretesting.com/users/me",
+            {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
             }
-        }
         )
-        const orderResponseJson =  await orderResponse.json();
-        orderid = orderResponseJson.orders[0];
+        expect.soft(response.status()).toBe(200);
+        const body = await response.json();
+        console.log(JSON.stringify(body));
+
+        //Create cart
+        const cartResponse = await apiContext.post("https://api.practicesoftwaretesting.com/carts",
+            {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            }
+        )
+        const cartResponseJson = await cartResponse.json();
+        cartId = cartResponseJson.id;
+        console.log(cartResponseJson);
+
+        //Add to Cart
+        const orderResponse = await apiContext.post(`https://api.practicesoftwaretesting.com/carts/${cartId}`,
+            {
+                data: orderPayload,
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            }
+        )
+        const orderResponseJson = await orderResponse.json();
         console.log(orderResponseJson);
     });
 
-    test('Load dashboard', async ({page}) => {
-        page.addInitScript(value=> {
-            window.localStorage.setItem('token',value );
-        },token);
-        await page.goto("https://rahulshettyacademy.com/client/");
+    test('Load cart', async ({ page }) => {
+        page.addInitScript(value => {
+            window.localStorage.setItem('auth-token', value);
+        }, token);
+        await page.goto("https://practicesoftwaretesting.com/#/checkout");
+        page.addInitScript(value => {
+            window.sessionStorage.setItem('cart_id', value);
+        }, cartId);
+        page.addInitScript(value => {
+            window.sessionStorage.setItem('cart_quantity', value);
+        }, '1');
+        await page.reload();
+        await page.pause();
     });
-
-    test.only('Verify order ID', async ({page}) => {
-        page.addInitScript(value=> {
-            window.localStorage.setItem('token',value );
-        },token);
-        await page.goto("https://rahulshettyacademy.com/client/dashboard/myorders");
-        await page.goto(`https://rahulshettyacademy.com/client/dashboard/order-details/${orderid}`);
-
-    });
-
-
-
-    
 });
